@@ -1,36 +1,61 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: viajesgvr-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 2318
+      MYSQL_DATABASE: db_viajesgvr
+    ports:
+      - "3307:3306"
+    volumes:
+      - viajesgvr-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p2318"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend-1:
     image: gianellovr/viajesgvr-backend:latest
     container_name: viajesgvr-backend-1
     environment:
       SERVER_PORT: 8090
-      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_URL: jdbc:mysql://mysql:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       DB_USERNAME: root
       DB_PASSWORD: 2318
       KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
       KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   backend-2:
     image: gianellovr/viajesgvr-backend:latest
     container_name: viajesgvr-backend-2
     environment:
       SERVER_PORT: 8090
-      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_URL: jdbc:mysql://mysql:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       DB_USERNAME: root
       DB_PASSWORD: 2318
       KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
       KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   backend-3:
     image: gianellovr/viajesgvr-backend:latest
     container_name: viajesgvr-backend-3
     environment:
       SERVER_PORT: 8090
-      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_URL: jdbc:mysql://mysql:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       DB_USERNAME: root
       DB_PASSWORD: 2318
       KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
       KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   backend-balancer:
     image: nginx:alpine
@@ -73,3 +98,6 @@ services:
       - frontend-1
       - frontend-2
       - frontend-3
+
+volumes:
+  viajesgvr-mysql-data:
