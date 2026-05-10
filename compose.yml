@@ -1,0 +1,75 @@
+services:
+  backend-1:
+    image: gianellovr/viajesgvr-backend:latest
+    container_name: viajesgvr-backend-1
+    environment:
+      SERVER_PORT: 8090
+      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: 2318
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+
+  backend-2:
+    image: gianellovr/viajesgvr-backend:latest
+    container_name: viajesgvr-backend-2
+    environment:
+      SERVER_PORT: 8090
+      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: 2318
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+
+  backend-3:
+    image: gianellovr/viajesgvr-backend:latest
+    container_name: viajesgvr-backend-3
+    environment:
+      SERVER_PORT: 8090
+      DB_URL: jdbc:mysql://host.docker.internal:3306/db_viajesgvr?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: 2318
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/viajesgvr
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/viajesgvr/protocol/openid-connect/certs
+
+  backend-balancer:
+    image: nginx:alpine
+    container_name: viajesgvr-backend-balancer
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./nginx-backend.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend-1
+      - backend-2
+      - backend-3
+
+  frontend-1:
+    image: gianellovr/viajesgvr-frontend:latest
+    container_name: viajesgvr-frontend-1
+    depends_on:
+      - backend-balancer
+
+  frontend-2:
+    image: gianellovr/viajesgvr-frontend:latest
+    container_name: viajesgvr-frontend-2
+    depends_on:
+      - backend-balancer
+
+  frontend-3:
+    image: gianellovr/viajesgvr-frontend:latest
+    container_name: viajesgvr-frontend-3
+    depends_on:
+      - backend-balancer
+
+  frontend-balancer:
+    image: nginx:alpine
+    container_name: viajesgvr-frontend-balancer
+    ports:
+      - "8070:80"
+    volumes:
+      - ./nginx-frontend.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend-1
+      - frontend-2
+      - frontend-3
