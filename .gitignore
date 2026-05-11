@@ -1,0 +1,6 @@
+README_detalle.md
+certs/
+*.pem
+*.key
+*.jar
+running-backend.jar

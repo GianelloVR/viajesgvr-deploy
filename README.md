@@ -1,195 +1,233 @@
 # ViajesGVR Deploy
 
-Pasos mínimos para levantar la aplicación ViajesGVR usando Docker Compose.
+Repositorio de despliegue Docker para la aplicación ViajesGVR.
+
+Este repositorio contiene la configuración necesaria para levantar el sistema usando Docker Compose, tanto en ambiente local como en AWS.
+
+---
+
+## Servicios incluidos
+
+El despliegue levanta los siguientes servicios:
+
+- MySQL
+- Keycloak
+- Backend Spring Boot
+- Frontend React
+- Balanceador Nginx para backend
+- Balanceador Nginx para frontend
+
+En AWS se trabaja con varias instancias del backend y frontend para simular balanceo de carga.
 
 ---
 
 ## Requisitos previos
 
-Antes de levantar el despliegue, se debe tener:
+Antes de levantar el proyecto se necesita tener instalado:
 
-- Docker Desktop abierto y funcionando.
-- Keycloak corriendo en:
+- Docker
+- Docker Compose
+- Git
 
-```text
-http://localhost:8080
-```
+Además, las imágenes deben estar disponibles en Docker Hub:
 
-- Realm de Keycloak configurado:
-
-```text
-viajesgvr
+```bash
+gianellovr/viajesgvr-backend:latest
+gianellovr/viajesgvr-frontend:latest
 ```
 
 ---
 
-## 1. Levantar Keycloak
+## Levantar en ambiente local
 
-La aplicación usa Keycloak para el inicio de sesión y la autorización por roles.
-
-Si Keycloak ya existe como contenedor Docker, se puede levantar con:
+Desde la carpeta del repositorio:
 
 ```bash
-docker start <nombre-del-contenedor-keycloak>
+docker compose up -d
 ```
 
-Para verificar que Keycloak quedó corriendo:
+Verificar que los contenedores estén funcionando:
 
 ```bash
 docker ps
 ```
 
-Luego revisar en el navegador:
+Accesos locales:
 
 ```text
-http://localhost:8080
+Frontend:  http://localhost:8070
+Backend:   http://localhost:8090/api/tour-packages/
+Keycloak:  http://localhost:8080
 ```
 
 ---
 
-## 2. Ir a la carpeta del despliegue
-
-Abrir una terminal en la carpeta del repositorio:
-
-```bash
-cd viajesgvr-deploy
-```
-
----
-
-## 3. Levantar la aplicación
-
-Ejecutar:
-
-```bash
-docker compose up
-```
-
-Esto levanta los servicios definidos en `compose.yml`:
-
-- MySQL
-- 3 réplicas del backend
-- Balanceador Nginx para backend
-- 3 réplicas del frontend
-- Balanceador Nginx para frontend
-
----
-
-## 4. Verificar contenedores
-
-En otra terminal, ejecutar:
-
-```bash
-docker ps
-```
-
-Deberían aparecer contenedores asociados a:
-
-- MySQL
-- Backend
-- Frontend
-- Nginx
-- Keycloak
-
----
-
-## 5. Acceder a la aplicación
-
-Frontend:
-
-```text
-http://localhost:8070
-```
-
-Backend:
-
-```text
-http://localhost:8090/api/tour-packages/
-```
-
-Si el backend responde con una lista o con:
-
-```json
-[]
-```
-
-significa que está funcionando.
-
----
-
-## 6. Detener la aplicación
-
-Para detener los servicios del despliegue:
+## Detener ambiente local
 
 ```bash
 docker compose down
 ```
 
-Importante: no usar el siguiente comando si se quieren conservar los datos de la base de datos:
-
-```bash
-docker compose down -v
-```
-
-Ese comando elimina también el volumen de MySQL.
+No usar `-v` si se quieren conservar los datos de MySQL y Keycloak.
 
 ---
 
-## 7. Prueba rápida de balanceo
+## Levantar en AWS
 
-Para detener una réplica del backend:
+Conectarse por SSH a la instancia EC2 y entrar a la carpeta del despliegue:
 
 ```bash
-docker stop viajesgvr-backend-1
+cd ~/viajesgvr-deploy
 ```
 
-Luego probar nuevamente:
+Descargar las últimas imágenes:
+
+```bash
+docker pull gianellovr/viajesgvr-backend:latest
+docker pull gianellovr/viajesgvr-frontend:latest
+```
+
+Levantar los servicios:
+
+```bash
+docker compose -f compose.aws.yml up -d
+```
+
+Verificar contenedores:
+
+```bash
+docker ps
+```
+
+Acceso en AWS:
 
 ```text
-http://localhost:8090/api/tour-packages/
+https://<IP_PUBLICA_EC2>:8070
 ```
 
-La aplicación debería seguir funcionando.
-
-Para volver a levantarla:
-
-```bash
-docker start viajesgvr-backend-1
-```
-
-Para detener una réplica del frontend:
-
-```bash
-docker stop viajesgvr-frontend-1
-```
-
-Luego probar nuevamente:
+En el despliegue usado para la entrega:
 
 ```text
-http://localhost:8070
-```
-
-La aplicación debería seguir funcionando.
-
-Para volver a levantarla:
-
-```bash
-docker start viajesgvr-frontend-1
+https://18.216.240.192:8070
 ```
 
 ---
 
-## Resumen
+## Detener ambiente AWS
 
-Orden recomendado para iniciar todo:
+Desde la carpeta del despliegue en la instancia EC2:
 
 ```bash
-docker start <nombre-del-contenedor-keycloak>
-docker compose up
+docker compose -f compose.aws.yml down
 ```
 
-Luego abrir:
+No usar `-v` si se quieren conservar los datos de MySQL y Keycloak.
+
+---
+
+## Usuarios de prueba
+
+Administrador:
 
 ```text
-http://localhost:8070
+Usuario: admin
+Contraseña: admin123
 ```
+
+Cliente:
+
+```text
+Usuario: cliente
+Contraseña: cliente123
+```
+
+---
+
+## Prueba rápida del sistema
+
+Una vez levantado el sistema:
+
+1. Entrar al frontend.
+2. Iniciar sesión como administrador.
+3. Ir a Panel Admin.
+4. Crear un paquete turístico.
+5. Verificar que el paquete aparezca en la lista.
+6. Cerrar sesión.
+7. Iniciar sesión como cliente.
+8. Verificar que el cliente pueda ver los paquetes.
+
+---
+
+## Comandos útiles
+
+Ver contenedores activos:
+
+```bash
+docker ps
+```
+
+Ver logs del backend:
+
+```bash
+docker logs viajesgvr-backend-1 --tail=80
+```
+
+Ver logs del balanceador backend:
+
+```bash
+docker logs viajesgvr-backend-balancer --tail=80
+```
+
+Ver logs del balanceador frontend:
+
+```bash
+docker logs viajesgvr-frontend-balancer --tail=80
+```
+
+Ver logs de Keycloak:
+
+```bash
+docker logs viajesgvr-keycloak --tail=80
+```
+
+Ver logs de MySQL:
+
+```bash
+docker logs viajesgvr-mysql --tail=80
+```
+
+---
+
+## Archivos principales
+
+```text
+compose.yml                  Configuración para ambiente local
+compose.aws.yml              Configuración para ambiente AWS
+nginx-backend.conf           Balanceador del backend
+nginx-frontend.conf          Balanceador del frontend local
+nginx-frontend-aws.conf      Configuración frontend AWS sin SSL
+nginx-frontend-aws-ssl.conf  Configuración frontend AWS con HTTPS
+viajesgvr-realm.json         Configuración inicial de Keycloak
+```
+
+---
+
+## Notas importantes
+
+La versión local se levanta con:
+
+```bash
+docker compose up -d
+```
+
+La versión AWS se levanta con:
+
+```bash
+docker compose -f compose.aws.yml up -d
+```
+
+La carpeta `certs/` no se sube al repositorio porque puede contener certificados o claves privadas.
+
+El archivo `README_detalle.md` no forma parte del despliegue final y no se sube al repositorio.
+
+La configuración CORS del backend permite el origen local y el origen AWS usado para la entrega.
